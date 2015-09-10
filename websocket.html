@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+    <script type="text/javascript">
+        console.log("connecting");
+
+        websocket = new WebSocket("ws://localhost:8080/chat");
+
+        websocket.onopen = function(evt) {
+            console.log("connected");
+
+            var shake = {
+                header: {
+                    'type': 2
+                }
+            };
+
+            websocket.send(JSON.stringify(shake));
+        };
+
+        websocket.onclose = function(evt) {
+            console.log("closed");
+        };
+
+        websocket.onerror = function(evt) {
+            console.log("error:" + evt);
+        }
+
+        websocket.onmessage = function(evt) {
+            console.log("msg:" + evt.data);
+        };
+
+    </script>
+</body>
+</html>
