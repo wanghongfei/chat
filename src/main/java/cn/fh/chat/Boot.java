@@ -9,7 +9,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
@@ -23,9 +22,15 @@ import org.slf4j.LoggerFactory;
 public class Boot {
     public static Logger logger = LoggerFactory.getLogger(Boot.class);
 
+    public static int DEFAULT_PORT = 8080;
+
+    public static String DEFAULT_HOST = "localhost";
+
     public static void main(String[] args) {
         logger.info("starting server");
         long startTime = System.currentTimeMillis();
+
+        int port = getPort(args);
 
         DataRepo repo = new DataRepo();
 
@@ -50,8 +55,8 @@ public class Boot {
                     });
 
             ChannelFuture f = boot.bind(8080).sync();
-            logger.info("server is listening at {}:{}/{}", "localhost", 8080, "chat");
-            logger.info("time:{}ms", System.currentTimeMillis() - startTime);
+            logger.info("server is listening at {}:{}/{}", "localhost", port, "chat");
+            logger.info("time consumed:{}ms", System.currentTimeMillis() - startTime);
 
             f.channel().closeFuture().sync();
 
@@ -59,12 +64,31 @@ public class Boot {
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         } finally {
-            logger.info("stoping server");
+            logger.info("stopping server");
 
             masterGroup.shutdownGracefully();
             slaveGroup.shutdownGracefully();
 
             logger.info("server stopped");
         }
+    }
+
+    public static int getPort(String[] args) {
+        if (args.length > 0) {
+
+            int port;
+            try {
+                port = Integer.parseInt(args[0]);
+            } catch (NumberFormatException ex) {
+                logger.info("invalid port, using default {}", DEFAULT_PORT);
+                return DEFAULT_PORT;
+            }
+
+            return port;
+        }
+
+
+        logger.info("using default port {}", DEFAULT_PORT);
+        return DEFAULT_PORT;
     }
 }
