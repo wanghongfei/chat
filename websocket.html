@@ -7,6 +7,7 @@
 <body>
     <script type="text/javascript">
         console.log("connecting");
+        var token;
 
         websocket = new WebSocket("ws://localhost:8080/chat");
 
@@ -19,7 +20,22 @@
                 }
             };
 
+
+            var data = {
+                'header': {
+                    'type': 0,
+                    'token': 'token',
+                    'targetMemId': 0,
+                    'clientTime': 'time',
+                    'memId': '0'
+                },
+
+                'content': 'hello'
+
+            };
+
             websocket.send(JSON.stringify(shake));
+            websocket.send(JSON.stringify(data));
         };
 
         websocket.onclose = function(evt) {
@@ -32,7 +48,12 @@
 
         websocket.onmessage = function(evt) {
             console.log("msg:" + evt.data);
+
+            var d = eval('(' + evt.data + ')')
+            console.log(d);
+
         };
+
 
     </script>
 </body>

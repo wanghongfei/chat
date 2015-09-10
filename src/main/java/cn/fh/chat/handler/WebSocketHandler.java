@@ -139,12 +139,19 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         if (frame instanceof TextWebSocketFrame) {
             // 取出数据
             String request = ((TextWebSocketFrame) frame).text();
-            System.out.println("recv:" + request);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("recv: {}", request);
+            }
 
             // decode
             Message msg = CodingUtils.decode(request);
             // 消息内容格式不正确
             if (null == msg) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("decoding failed");
+                }
+
                 sendWebSocketResponse(ctx, ErrorCode.BAD_CONTENT, null);
                 return;
             }
@@ -155,12 +162,13 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
                 dispatchMessage(ctx, msg);
             } catch (InvalidContentException e) {
                 e.printStackTrace();
+                sendWebSocketResponse(ctx, ErrorCode.FAILED, null);
 
             } catch (NotExistException e) {
                 e.printStackTrace();
+                sendWebSocketResponse(ctx, ErrorCode.FAILED, null);
 
             } finally {
-                sendWebSocketResponse(ctx, ErrorCode.FAILED, null);
             }
 
             return;
@@ -177,6 +185,10 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
      */
     private void sendWebSocketResponse(ChannelHandlerContext ctx, ErrorCode code, Object data) {
         TextWebSocketFrame frame = null;
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("sending: {}, {}", code.getCode(), data);
+        }
 
         if (null != data) {
             frame = new TextWebSocketFrame(
@@ -239,19 +251,26 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
      */
     private void sendToken(ChannelHandlerContext ctx, int count) {
         // 生成token
-        String token = RandomStringUtils.randomAlphabetic(count);
+        //String token = RandomStringUtils.randomAlphabetic(count);
+        String token = "token";
         // 生成memberId
         Integer memId = DataRepo.memIdSequence.getAndIncrement();
 
         repo.putToken(memId, token);
+        repo.putCtx(token, ctx);
 
         // 把结果转换成json字符串返回
         Map<String, Object> map = new HashMap<>();
         map.put("token", token);
         map.put("memberId", memId);
-        JSONObject jsonObject = new JSONObject(map);
+/*        JSONObject jsonObject = new JSONObject(map);
 
-        sendWebSocketResponse(ctx, ErrorCode.SUCCESS, jsonObject.toJSONString());
+        String json = jsonObject.toJSONString();
+        if (logger.isDebugEnabled()) {
+            logger.debug("handshake: {}", json);
+        }*/
+
+        sendWebSocketResponse(ctx, ErrorCode.SUCCESS, map);
     }
 
     private void sendRoomMessage(ChannelHandlerContext ctx, Message msg) throws NotExistException {
@@ -284,13 +303,15 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             throw new NotExistException();
         }
 
+        msg.getHeader().setToken(null);
+
         // 转发信息给目标用户
         targetCtx.channel().writeAndFlush(
                 new TextWebSocketFrame(JSON.toJSONString(msg))
         );
 
         // 返回发送成功
-        ctx.writeAndFlush(new TextWebSocketFrame("ok"));
+        sendWebSocketResponse(ctx, ErrorCode.SUCCESS, null);
 
     }
 

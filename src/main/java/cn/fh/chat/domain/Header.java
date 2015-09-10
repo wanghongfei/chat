@@ -6,6 +6,7 @@ package cn.fh.chat.domain;
 public class Header {
     private String token;
     private String memId;
+    private String memName;
 
     private String clientTime;
     private String serverTime;
@@ -69,5 +70,13 @@ public class Header {
 
     public void setType(Integer type) {
         this.type = type;
+    }
+
+    public String getMemName() {
+        return memName;
+    }
+
+    public void setMemName(String memName) {
+        this.memName = memName;
     }
 }
