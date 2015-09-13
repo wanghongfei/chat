@@ -1,11 +1,14 @@
 package cn.fh.chat.data;
 
+import cn.fh.chat.domain.Member;
 import io.netty.channel.ChannelHandlerContext;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Created by whf on 9/10/15.
@@ -23,7 +26,7 @@ public class DataRepo {
     /**
      * 保存从memberId到token的映射
      */
-    private Map<Integer, String> tokenMap;
+    private Map<Integer, Member> tokenMap;
 
     /**
      * 保存聊天室id到用户集合的映射
@@ -48,12 +51,12 @@ public class DataRepo {
         userRepo.put(token, ctx);
     }
 
-    public String getToken(Integer memId) {
+    public Member getToken(Integer memId) {
         return tokenMap.get(memId);
     }
 
-    public void putToken(Integer memId, String token) {
-        tokenMap.put(memId, token);
+    public void putToken(Integer memId, Member member) {
+        tokenMap.put(memId, member);
     }
 
     public Set<String> getRoomTokens(Integer roomId) {
@@ -62,6 +65,17 @@ public class DataRepo {
 
     public int sizeOfOnlineUser() {
         return this.userRepo.size();
+    }
+
+    public List<Member> onlineUserList() {
+        Set<Map.Entry<Integer, Member>> entrySet = tokenMap.entrySet();
+
+        return entrySet.stream()
+                .map( entry -> {
+                    Member m = entry.getValue();
+                    m.setToken(null);
+                    return m;
+                }).collect(Collectors.toList());
     }
 
 }

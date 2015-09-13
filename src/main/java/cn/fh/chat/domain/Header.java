@@ -12,6 +12,7 @@ public class Header {
     private String serverTime;
 
     private Integer targetMemId;
+    private Member member;
     private Integer targetRoomId;
 
     private Integer type; // 0: 一对一信息; 1:聊天室信息, 2:handshake
@@ -74,6 +75,14 @@ public class Header {
 
     public String getMemName() {
         return memName;
+    }
+
+    public Member getMember() {
+        return member;
+    }
+
+    public void setMember(Member member) {
+        this.member = member;
     }
 
     public void setMemName(String memName) {

@@ -4,11 +4,13 @@ import cn.fh.chat.constants.ErrorCode;
 import cn.fh.chat.constants.MsgType;
 import cn.fh.chat.data.DataRepo;
 import cn.fh.chat.domain.Header;
+import cn.fh.chat.domain.Member;
 import cn.fh.chat.domain.Message;
 import cn.fh.chat.domain.ServerResponse;
 import cn.fh.chat.exception.InvalidContentException;
 import cn.fh.chat.exception.NotExistException;
 import cn.fh.chat.utils.CodingUtils;
+import cn.fh.chat.utils.DateUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import io.netty.channel.ChannelFutureListener;
@@ -20,9 +22,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 事件处理类，封装了业务逻辑
@@ -231,7 +231,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         MsgType type = MsgType.toType(msg.getHeader().getType());
         switch (type) {
             case HANDSHAKE:
-                sendToken(ctx, 30);
+                sendToken(ctx, 30, msg);
                 break;
 
             case PRIVATE:
@@ -241,7 +241,20 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             case ROOM:
                 sendRoomMessage(ctx, msg);
                 break;
+
+            case QUERY_ONLINE:
+                sendOnlineUser(ctx);
+                break;
         }
+    }
+
+    private void sendOnlineUser(ChannelHandlerContext ctx) {
+        Header header = new Header();
+        header.setServerTime(DateUtils.now());
+        // TODO
+
+        List<Member> mList = repo.onlineUserList();
+        sendWebSocketResponse(ctx, ErrorCode.SUCCESS, mList);
     }
 
     /**
@@ -249,14 +262,26 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
      * @param ctx
      * @param count
      */
-    private void sendToken(ChannelHandlerContext ctx, int count) {
+    private void sendToken(ChannelHandlerContext ctx, int count, Message msg) {
         // 生成token
-        //String token = RandomStringUtils.randomAlphabetic(count);
-        String token = "token";
+        String token = RandomStringUtils.randomAlphabetic(count);
+        //String token = "token";
         // 生成memberId
         Integer memId = DataRepo.memIdSequence.getAndIncrement();
 
-        repo.putToken(memId, token);
+        Member mem = null;
+        try {
+            mem = Member.fromJson(msg.getContent());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            sendWebSocketResponse(ctx, ErrorCode.BAD_CONTENT, null);
+
+            return;
+        }
+
+        mem.setId(memId);
+        mem.setToken(token);
+        repo.putToken(memId, mem);
         repo.putCtx(token, ctx);
 
         // 把结果转换成json字符串返回
@@ -291,13 +316,13 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private void sendPrivateMessage(ChannelHandlerContext ctx, Message msg) throws NotExistException{
-        String targetToken = repo.getToken(msg.getHeader().getTargetMemId());
+        Member member = repo.getToken(msg.getHeader().getTargetMemId());
         // 用户不存在
-        if (null == targetToken) {
+        if (null == member || null == member.getToken()) {
             throw new NotExistException();
         }
 
-        ChannelHandlerContext targetCtx = repo.getCtx(targetToken);
+        ChannelHandlerContext targetCtx = repo.getCtx(member.getToken());
         // 用户不在线
         if (null == targetCtx) {
             throw new NotExistException();
@@ -336,7 +361,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             return false;
         }
 
-        if (MsgType.HANDSHAKE == t) {
+        if (MsgType.HANDSHAKE == t || MsgType.QUERY_ONLINE == t) {
             return true;
         }
 

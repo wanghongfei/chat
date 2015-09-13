@@ -34,7 +34,8 @@ public class Boot {
 
         DataRepo repo = new DataRepo();
 
-        EventLoopGroup masterGroup = new NioEventLoopGroup();
+
+        EventLoopGroup masterGroup = new NioEventLoopGroup(1);
         EventLoopGroup slaveGroup = new NioEventLoopGroup();
 
         try {
