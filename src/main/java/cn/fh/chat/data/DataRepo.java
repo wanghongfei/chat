@@ -52,7 +52,9 @@ public class DataRepo {
     }
 
     public Member getToken(Integer memId) {
-        return tokenMap.get(memId);
+        Member m = tokenMap.get(memId);
+
+        return Member.clone(m);
     }
 
     public void putToken(Integer memId, Member member) {

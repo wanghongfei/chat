@@ -18,6 +18,19 @@ public class Member {
 
     private String token;
 
+    public Member(Integer id, String nickname, Integer gender, Integer age, String location, String token) {
+        this.id = id;
+        this.nickname = nickname;
+        this.gender = gender;
+        this.age = age;
+        this.location = location;
+        this.token = token;
+    }
+
+    public static Member clone(Member other) {
+        return new Member(other.id, other.nickname, other.age, other.age, other.location, other.token);
+    }
+
     /**
      * 将json转换成Member对象
      * @param json

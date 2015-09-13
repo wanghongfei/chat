@@ -323,6 +323,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         }
 
         ChannelHandlerContext targetCtx = repo.getCtx(member.getToken());
+        member.setToken(null);
         // 用户不在线
         if (null == targetCtx) {
             throw new NotExistException();
