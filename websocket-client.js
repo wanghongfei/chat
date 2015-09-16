@@ -48,11 +48,13 @@ ws.on('message', function(data, flags) {
         console.log("memberId = ", memId);
 
         first = false;
+
+        sendData.header.token = token;
+        sendData.header.targetMemId = 0;
+        sendData.header.memId = memId;
+
+        //ws.send(JSON.stringify(sendData));
     }
 
-    sendData.header.token = token;
-    sendData.header.targetMemId = 12;
-    sendData.header.memId = memId;
 
-    ws.send(JSON.stringify(sendData));
 });

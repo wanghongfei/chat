@@ -1,6 +1,8 @@
 package cn.fh.chat.domain;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.annotation.JSONField;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Created by whf on 9/13/15.
@@ -18,6 +20,9 @@ public class Member {
 
     private String token;
 
+    @JSONField(serialize = false)
+    private ChannelHandlerContext ctx;
+
     public Member() {}
 
     public Member(Integer id, String nickname, Integer gender, Integer age, String location, String token) {
@@ -27,6 +32,12 @@ public class Member {
         this.age = age;
         this.location = location;
         this.token = token;
+    }
+
+    public Member(Integer id, String nickname, Integer gender, Integer age, String location, String token, ChannelHandlerContext ctx) {
+        this(id, nickname, gender, age, location, token);
+
+        this.ctx = ctx;
     }
 
     public static Member clone(Member other) {
@@ -41,6 +52,13 @@ public class Member {
      */
     public static Member fromJson(String json) throws Exception {
         return JSON.parseObject(json, Member.class);
+    }
+
+    public static Member fromJson(String json, ChannelHandlerContext ctx) throws Exception {
+        Member m = JSON.parseObject(json, Member.class);
+        m.setCtx(ctx);
+
+        return m;
     }
 
     public Integer getId() {
@@ -89,5 +107,13 @@ public class Member {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public ChannelHandlerContext getCtx() {
+        return ctx;
+    }
+
+    public void setCtx(ChannelHandlerContext ctx) {
+        this.ctx = ctx;
     }
 }

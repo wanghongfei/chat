@@ -4,15 +4,32 @@ package cn.fh.chat.domain;
  * Created by whf on 9/10/15.
  */
 public class Header {
+    /**
+     * 发送者的token
+     */
     private String token;
+    /**
+     * 发送者的用户id
+     */
     private String memId;
+    /**
+     * 发送者昵称，optional
+     */
     private String memName;
 
+    /**
+     * 发送时间
+     */
     private String clientTime;
     private String serverTime;
 
+    /**
+     * 目标用户id, 与targetRoomId二选一
+     */
     private Integer targetMemId;
-    private Member member;
+    /**
+     * 目标聊天室id, 与targetMemId二选一
+     */
     private Integer targetRoomId;
 
     private Integer type; // 0: 一对一信息; 1:聊天室信息, 2:handshake
@@ -77,13 +94,6 @@ public class Header {
         return memName;
     }
 
-    public Member getMember() {
-        return member;
-    }
-
-    public void setMember(Member member) {
-        this.member = member;
-    }
 
     public void setMemName(String memName) {
         this.memName = memName;

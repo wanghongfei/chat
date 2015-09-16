@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
+ * 保存当前在线的用户信息
  * Created by whf on 9/10/15.
  */
 public class DataRepo {
@@ -19,58 +20,21 @@ public class DataRepo {
     public static AtomicInteger roomIdSequence = new AtomicInteger(0);
 
     /**
-     * 保存从token到上下文的映射
+     * 保存从member id到Member对象的映射
      */
-    private Map<String, ChannelHandlerContext> userRepo;
-
-    /**
-     * 保存从memberId到token的映射
-     */
-    private Map<Integer, Member> tokenMap;
-
-    /**
-     * 保存聊天室id到用户集合的映射
-     */
-    private Map<Integer, Set<String>> roomMap;
+    private Map<Integer, Member> memMap;
 
     public DataRepo(int cap) {
-        this.userRepo = new ConcurrentHashMap<>(cap);
-        this.tokenMap = new ConcurrentHashMap<>(cap);
-        this.roomMap = new ConcurrentHashMap<>(cap);
+        this.memMap = new ConcurrentHashMap<>(cap);
     }
 
     public DataRepo() {
         this(50);
     }
 
-    public ChannelHandlerContext getCtx(String token) {
-        return userRepo.get(token);
-    }
-
-    public void putCtx(String token, ChannelHandlerContext ctx) {
-        userRepo.put(token, ctx);
-    }
-
-    public Member getToken(Integer memId) {
-        Member m = tokenMap.get(memId);
-
-        return Member.clone(m);
-    }
-
-    public void putToken(Integer memId, Member member) {
-        tokenMap.put(memId, member);
-    }
-
-    public Set<String> getRoomTokens(Integer roomId) {
-        return roomMap.get(roomId);
-    }
-
-    public int sizeOfOnlineUser() {
-        return this.userRepo.size();
-    }
 
     public List<Member> onlineUserList() {
-        Set<Map.Entry<Integer, Member>> entrySet = tokenMap.entrySet();
+        Set<Map.Entry<Integer, Member>> entrySet = memMap.entrySet();
 
         return entrySet.stream()
                 .map( entry -> {
@@ -78,6 +42,18 @@ public class DataRepo {
                     m.setToken(null);
                     return m;
                 }).collect(Collectors.toList());
+    }
+
+    public void putMember(Integer id, Member m) {
+        memMap.put(id, m);
+    }
+
+    public Member getMember(Integer id) {
+        return memMap.get(id);
+    }
+
+    public void remove(Integer id) {
+        memMap.remove(id);
     }
 
 }

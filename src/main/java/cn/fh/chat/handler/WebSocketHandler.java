@@ -1,5 +1,6 @@
 package cn.fh.chat.handler;
 
+import cn.fh.chat.constants.AttrKey;
 import cn.fh.chat.constants.ErrorCode;
 import cn.fh.chat.constants.MsgType;
 import cn.fh.chat.data.DataRepo;
@@ -13,11 +14,14 @@ import cn.fh.chat.utils.CodingUtils;
 import cn.fh.chat.utils.DateUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.sun.tools.doclint.HtmlTag;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.*;
+import io.netty.util.AttributeKey;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +46,20 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
     }
 
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        // 断开连接
+        ctx.close().addListener( f -> {
+            // 从在线用户中去掉
+            Member m = (Member) ctx.attr(AttributeKey.valueOf(AttrKey.USER.toString())).get();
+            repo.remove(m.getId());
+
+            if ( logger.isDebugEnabled() ) {
+                logger.debug("用户{}:{}断开连接", m.getId(), m.getNickname());
+            }
+        });
+    }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
@@ -271,9 +289,9 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
         Member mem = null;
         try {
-            mem = Member.fromJson(msg.getContent());
+            mem = Member.fromJson(msg.getContent(), ctx);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            //ex.printStackTrace();
             sendWebSocketResponse(ctx, ErrorCode.BAD_CONTENT, null);
 
             return;
@@ -281,25 +299,21 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
         mem.setId(memId);
         mem.setToken(token);
-        repo.putToken(memId, mem);
-        repo.putCtx(token, ctx);
+        repo.putMember(memId, mem);
+
+        AttributeKey attr = AttributeKey.valueOf(AttrKey.USER.toString());
+        ctx.attr(attr).set(mem);
 
         // 把结果转换成json字符串返回
         Map<String, Object> map = new HashMap<>();
         map.put("token", token);
         map.put("memberId", memId);
-/*        JSONObject jsonObject = new JSONObject(map);
-
-        String json = jsonObject.toJSONString();
-        if (logger.isDebugEnabled()) {
-            logger.debug("handshake: {}", json);
-        }*/
 
         sendWebSocketResponse(ctx, ErrorCode.SUCCESS, map);
     }
 
     private void sendRoomMessage(ChannelHandlerContext ctx, Message msg) throws NotExistException {
-        Set<String> tokenSet = repo.getRoomTokens(msg.getHeader().getTargetRoomId());
+/*        Set<String> tokenSet = repo.getRoomTokens(msg.getHeader().getTargetRoomId());
         // 聊天室不存在
         if (null == tokenSet) {
             throw new NotExistException();
@@ -312,23 +326,22 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         }
 
         // 返回发送成功
-        ctx.writeAndFlush(new TextWebSocketFrame("ok"));
+        ctx.writeAndFlush(new TextWebSocketFrame("ok"));*/
     }
 
     private void sendPrivateMessage(ChannelHandlerContext ctx, Message msg) throws NotExistException{
-        Member member = repo.getToken(msg.getHeader().getTargetMemId());
+        // 取出目标用户实体
+        Integer target = msg.getHeader().getTargetMemId();
+        Member member = repo.getMember(target);
+
         // 用户不存在
         if (null == member || null == member.getToken()) {
             throw new NotExistException();
         }
 
-        ChannelHandlerContext targetCtx = repo.getCtx(member.getToken());
+        // 取出目标用户的上下文
+        ChannelHandlerContext targetCtx = member.getCtx();
         member.setToken(null);
-        // 用户不在线
-        if (null == targetCtx) {
-            throw new NotExistException();
-        }
-
         msg.getHeader().setToken(null);
 
         // 转发信息给目标用户
