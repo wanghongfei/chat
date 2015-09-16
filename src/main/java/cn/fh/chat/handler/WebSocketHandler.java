@@ -16,10 +16,9 @@ import cn.fh.chat.utils.DateUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.sun.tools.doclint.HtmlTag;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.*;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.*;
 import io.netty.util.AttributeKey;
@@ -28,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 事件处理类，封装了业务逻辑
@@ -374,25 +374,11 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
 
         // 向该聊天室中所有人发送信息
-        memList.forEach( mem -> {
-            ChannelHandlerContext targetCtx = mem.getCtx();
-            targetCtx.channel().writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(msg)));
-        });
+        Collection<Channel> channelCo = memList.stream()
+                .map( mem -> mem.getCtx().channel() )
+                .collect(Collectors.toSet());
+        sendInChannelGroup(ctx, channelCo, msg);
 
-/*        Set<String> tokenSet = repo.getRoomTokens(msg.getHeader().getTargetRoomId());
-        // 聊天室不存在
-        if (null == tokenSet) {
-            throw new NotExistException();
-        }
-
-        // 向该聊天室中所有人发送信息
-        for (String token : tokenSet) {
-            ChannelHandlerContext targetCtx = repo.getCtx(token);
-            targetCtx.channel().writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(msg)));
-        }
-
-        // 返回发送成功
-        ctx.writeAndFlush(new TextWebSocketFrame("ok"));*/
     }
 
     private void sendPrivateMessage(ChannelHandlerContext ctx, Message msg) throws NotExistException{
@@ -417,6 +403,21 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
         // 返回发送成功
         sendWebSocketResponse(ctx, ErrorCode.SUCCESS, null);
+
+    }
+
+    /**
+     * 通过ChannelGroup批量发送信息
+     * @param ctx
+     * @param channelCo
+     * @param msg
+     */
+    private void sendInChannelGroup(ChannelHandlerContext ctx, Collection<Channel> channelCo, Message msg) {
+        ChannelGroup g = new DefaultChannelGroup(ctx.executor());
+        g.addAll(channelCo);
+
+        g.writeAndFlush( new TextWebSocketFrame(JSON.toJSONString(msg)) )
+                .addListener(f -> sendWebSocketResponse(ctx, ErrorCode.SUCCESS, null));
 
     }
 
