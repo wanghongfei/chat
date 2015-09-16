@@ -49,7 +49,9 @@ public class DataRepo {
     }
 
     public Member getMember(Integer id) {
-        return memMap.get(id);
+        Member m = memMap.get(id);
+
+        return Member.clone(m);
     }
 
     public void remove(Integer id) {

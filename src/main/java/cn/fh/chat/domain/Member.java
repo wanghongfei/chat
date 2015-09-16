@@ -41,7 +41,7 @@ public class Member {
     }
 
     public static Member clone(Member other) {
-        return new Member(other.id, other.nickname, other.age, other.age, other.location, other.token);
+        return new Member(other.id, other.nickname, other.age, other.age, other.location, other.token, other.ctx);
     }
 
     /**

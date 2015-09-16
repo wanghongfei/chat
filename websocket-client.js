@@ -53,7 +53,7 @@ ws.on('message', function(data, flags) {
         sendData.header.targetMemId = 0;
         sendData.header.memId = memId;
 
-        //ws.send(JSON.stringify(sendData));
+        ws.send(JSON.stringify(sendData));
     }
 
 
