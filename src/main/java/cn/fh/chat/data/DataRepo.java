@@ -3,9 +3,7 @@ package cn.fh.chat.data;
 import cn.fh.chat.domain.Member;
 import io.netty.channel.ChannelHandlerContext;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -24,8 +22,20 @@ public class DataRepo {
      */
     private Map<Integer, Member> memMap;
 
+    /**
+     * 保存聊天室状态
+     */
+    private Map<Integer, List<Member>> roomMap;
+
     public DataRepo(int cap) {
         this.memMap = new ConcurrentHashMap<>(cap);
+
+        // 新建5个聊天室
+        roomMap = new ConcurrentHashMap<>(10);
+        for (int ix = 0 ; ix < 5 ; ++ix) {
+            roomMap.put(roomIdSequence.getAndIncrement(), new ArrayList<Member>(10));
+        }
+
     }
 
     public DataRepo() {
@@ -58,4 +68,23 @@ public class DataRepo {
         memMap.remove(id);
     }
 
+    public List<Member> getMemberInRoom(Integer roomId) {
+        return roomMap.get(roomId);
+    }
+
+    public void joinRoom(Integer roomId, Member m) {
+        roomMap.get(roomId).add(m);
+    }
+
+    public void exitRoom(Integer roomId, Member m) {
+        List<Member> list = roomMap.get(roomId);
+
+        Iterator<Member> it = list.iterator();
+        while (it.hasNext()) {
+            Member obj = it.next();
+            if (obj.equals(m)) {
+                it.remove();
+            }
+        }
+    }
 }

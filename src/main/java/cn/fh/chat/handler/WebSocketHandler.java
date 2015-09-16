@@ -50,12 +50,12 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // 断开连接
-        ctx.close().addListener( f -> {
+        ctx.close().addListener(f -> {
             // 从在线用户中去掉
             Member m = (Member) ctx.attr(AttributeKey.valueOf(AttrKey.USER.toString())).get();
             repo.remove(m.getId());
 
-            if ( logger.isDebugEnabled() ) {
+            if (logger.isDebugEnabled()) {
                 logger.debug("用户{}:{}断开连接", m.getId(), m.getNickname());
             }
         });
@@ -263,7 +263,25 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             case QUERY_ONLINE:
                 sendOnlineUser(ctx);
                 break;
+
+            case JOIN_ROOM:
+                joinRoom(ctx, msg);
+                break;
         }
+    }
+
+    /**
+     * 将当前用户加入到聊天室
+     * @param ctx
+     * @param msg
+     */
+    protected void joinRoom(ChannelHandlerContext ctx, Message msg) {
+        Member m = (Member) ctx.attr(AttributeKey.valueOf(AttrKey.USER.toString()));
+        Integer roomId = msg.getHeader().getTargetRoomId();
+
+        repo.joinRoom(roomId, m);
+
+        sendWebSocketResponse(ctx, ErrorCode.SUCCESS, null);
     }
 
     private void sendOnlineUser(ChannelHandlerContext ctx) {
@@ -313,6 +331,19 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private void sendRoomMessage(ChannelHandlerContext ctx, Message msg) throws NotExistException {
+        List<Member> memList = repo.getMemberInRoom(msg.getHeader().getTargetRoomId());
+        // 聊天室不存在
+        if (null == memList) {
+            throw new NotExistException();
+        }
+
+
+        // 向该聊天室中所有人发送信息
+        memList.forEach( mem -> {
+            ChannelHandlerContext targetCtx = mem.getCtx();
+            targetCtx.channel().writeAndFlush(new TextWebSocketFrame(JSON.toJSONString(msg)));
+        });
+
 /*        Set<String> tokenSet = repo.getRoomTokens(msg.getHeader().getTargetRoomId());
         // 聊天室不存在
         if (null == tokenSet) {
@@ -396,6 +427,9 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
                 if (null == header.getTargetRoomId()) {
                     return false;
                 }
+                break;
+
+            case JOIN_ROOM:
                 break;
         }
 

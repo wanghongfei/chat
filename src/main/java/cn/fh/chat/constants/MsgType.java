@@ -9,7 +9,9 @@ public enum MsgType {
     PRIVATE(0),
     ROOM(1),
     HANDSHAKE(2),
-    QUERY_ONLINE(3);
+    QUERY_ONLINE(3),
+    JOIN_ROOM(4),
+    EXIT_ROOM(5);
 
 
     private int value;
@@ -31,6 +33,12 @@ public enum MsgType {
 
             case 3:
                 return QUERY_ONLINE;
+
+            case 4:
+                return JOIN_ROOM;
+
+            case 5:
+                return EXIT_ROOM;
 
             default:
                 return null;

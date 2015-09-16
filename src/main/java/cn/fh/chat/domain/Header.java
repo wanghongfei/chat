@@ -32,7 +32,7 @@ public class Header {
      */
     private Integer targetRoomId;
 
-    private Integer type; // 0: 一对一信息; 1:聊天室信息, 2:handshake
+    private Integer type; // 0: 一对一信息; 1:聊天室信息, 2:handshake, 3:查询所有在线用户, 4:请求加入聊天室
 
     public String getToken() {
         return token;
