@@ -11,6 +11,7 @@ import cn.fh.chat.domain.ServerResponse;
 import cn.fh.chat.exception.InvalidContentException;
 import cn.fh.chat.exception.NotExistException;
 import cn.fh.chat.utils.CodingUtils;
+import cn.fh.chat.utils.CollectionUtils;
 import cn.fh.chat.utils.DateUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -54,6 +55,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             // 从在线用户中去掉
             Member m = (Member) ctx.attr(AttributeKey.valueOf(AttrKey.USER.toString())).get();
             repo.remove(m.getId());
+
 
             if (logger.isDebugEnabled()) {
                 logger.debug("用户{}:{}断开连接", m.getId(), m.getNickname());
@@ -267,7 +269,31 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             case JOIN_ROOM:
                 joinRoom(ctx, msg);
                 break;
+
+            case EXIT_ROOM:
+                exitRoom(ctx, msg);
+                break;
         }
+    }
+
+    /**
+     * 退出聊天室
+     * @param ctx
+     * @param msg
+     */
+    protected void exitRoom(ChannelHandlerContext ctx, Message msg) {
+        Member m = (Member) ctx.attr(AttributeKey.valueOf(AttrKey.USER.toString()));
+        Integer roomId = msg.getHeader().getTargetRoomId();
+
+        // 更新聊天室状态
+        repo.exitRoom(roomId, m);
+        // 更新用户状态
+        List<Integer> roomList = m.getRoomList();
+        if (null != roomList) {
+            CollectionUtils.removeFrom(roomList, num -> num.equals(roomId));
+        }
+
+        sendWebSocketResponse(ctx, ErrorCode.SUCCESS, null);
     }
 
     /**
@@ -279,7 +305,16 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         Member m = (Member) ctx.attr(AttributeKey.valueOf(AttrKey.USER.toString()));
         Integer roomId = msg.getHeader().getTargetRoomId();
 
+        // 在房间中记录这个用户的加入
         repo.joinRoom(roomId, m);
+        // 在用户中记录自己加入了这个房间
+        List<Integer> roomList = m.getRoomList();
+        if (null == roomId) {
+            roomList = new ArrayList<>(3);
+            roomList.add(roomId);
+        }
+        m.setRoomList(roomList);
+
 
         sendWebSocketResponse(ctx, ErrorCode.SUCCESS, null);
     }

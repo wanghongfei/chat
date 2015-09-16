@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
 import io.netty.channel.ChannelHandlerContext;
 
+import java.util.List;
+
 /**
  * Created by whf on 9/13/15.
  */
@@ -22,6 +24,12 @@ public class Member {
 
     @JSONField(serialize = false)
     private ChannelHandlerContext ctx;
+
+    @JSONField(serialize = false)
+    /**
+     * 记录当前用户所在的聊天室
+     */
+    private List<Integer> roomList;
 
     public Member() {}
 
@@ -128,6 +136,14 @@ public class Member {
     @Override
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
+    }
+
+    public List<Integer> getRoomList() {
+        return roomList;
+    }
+
+    public void setRoomList(List<Integer> roomList) {
+        this.roomList = roomList;
     }
 
     public void setCtx(ChannelHandlerContext ctx) {
