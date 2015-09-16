@@ -48,6 +48,11 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
     }
 
 
+    /**
+     * 连接断开
+     * @param ctx
+     * @throws Exception
+     */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // 断开连接
@@ -56,6 +61,12 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             Member m = (Member) ctx.attr(AttributeKey.valueOf(AttrKey.USER.toString())).get();
             repo.remove(m.getId());
 
+            // 从聊天室中去掉
+            List<Integer> roomList = m.getRoomList();
+            if (null != roomList) {
+                roomList.forEach( id -> repo.exitRoom(id, m));
+            }
+
 
             if (logger.isDebugEnabled()) {
                 logger.debug("用户{}:{}断开连接", m.getId(), m.getNickname());
@@ -63,6 +74,12 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         });
     }
 
+    /**
+     * 异常处理
+     * @param ctx
+     * @param cause
+     * @throws Exception
+     */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         // 关闭连接
@@ -71,6 +88,12 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         super.exceptionCaught(ctx, cause);
     }
 
+    /**
+     * 消息处理
+     * @param ctx
+     * @param msg
+     * @throws Exception
+     */
     @Override
     protected void messageReceived(ChannelHandlerContext ctx, Object msg) throws Exception {
         logger.info("message received");
@@ -319,6 +342,10 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         sendWebSocketResponse(ctx, ErrorCode.SUCCESS, null);
     }
 
+    /**
+     * 返回所有在线用户信息
+     * @param ctx
+     */
     private void sendOnlineUser(ChannelHandlerContext ctx) {
         Header header = new Header();
         header.setServerTime(DateUtils.now());
@@ -365,6 +392,12 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         sendWebSocketResponse(ctx, ErrorCode.SUCCESS, map);
     }
 
+    /**
+     * 向聊天室发送信息
+     * @param ctx
+     * @param msg
+     * @throws NotExistException
+     */
     private void sendRoomMessage(ChannelHandlerContext ctx, Message msg) throws NotExistException {
         List<Member> memList = repo.getMemberInRoom(msg.getHeader().getTargetRoomId());
         // 聊天室不存在
@@ -375,12 +408,18 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
         // 向该聊天室中所有人发送信息
         Collection<Channel> channelCo = memList.stream()
-                .map( mem -> mem.getCtx().channel() )
+                .map(mem -> mem.getCtx().channel())
                 .collect(Collectors.toSet());
         sendInChannelGroup(ctx, channelCo, msg);
 
     }
 
+    /**
+     * 向个人发送信息
+     * @param ctx
+     * @param msg
+     * @throws NotExistException
+     */
     private void sendPrivateMessage(ChannelHandlerContext ctx, Message msg) throws NotExistException{
         // 取出目标用户实体
         Integer target = msg.getHeader().getTargetMemId();
