@@ -18,6 +18,8 @@ public class Member {
 
     private String token;
 
+    public Member() {}
+
     public Member(Integer id, String nickname, Integer gender, Integer age, String location, String token) {
         this.id = id;
         this.nickname = nickname;
