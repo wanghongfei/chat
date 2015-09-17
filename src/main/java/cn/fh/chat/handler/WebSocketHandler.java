@@ -407,11 +407,21 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
      * @throws NotExistException
      */
     private void sendRoomMessage(ChannelHandlerContext ctx, Message msg) throws NotExistException {
+        Integer roomId = msg.getHeader().getTargetRoomId();
+
+        // 检查当前用户是否在该聊天室中
+        if (!checkIfInThisRoom(ctx, roomId)) {
+            sendWebSocketResponse(ctx, ErrorCode.NOT_IN_THIS_ROOM, null);
+            return;
+        }
+
+        // 取出聊天室的所有用户对象
         List<Member> memList = repo.getMemberInRoom(msg.getHeader().getTargetRoomId());
         // 聊天室不存在
         if (null == memList) {
             throw new NotExistException();
         }
+
 
         MessageUtils.eraseSensitiveInfo(msg);
 
@@ -419,6 +429,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         Collection<Channel> channelCo = memList.stream()
                 .map(mem -> mem.getCtx().channel())
                 .collect(Collectors.toSet());
+        
         sendInChannelGroup(ctx, channelCo, msg);
 
     }
@@ -467,6 +478,26 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         g.writeAndFlush( new TextWebSocketFrame(JSON.toJSONString(msg)) )
                 .addListener(f -> sendWebSocketResponse(ctx, ErrorCode.SUCCESS, null));
 
+    }
+
+    /**
+     * 检查上下文中的用户是否在指定聊天室内
+     * @param ctx
+     * @param roomId
+     * @return
+     */
+    private boolean checkIfInThisRoom(ChannelHandlerContext ctx, Integer roomId) {
+        Member m = MessageUtils.getFromCtx(ctx);
+        List<Integer> roomList = m.getRoomList();
+        if (null == roomList) {
+            return false;
+        }
+
+        if (false == roomList.stream().anyMatch( room -> room.equals( roomId )) ) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

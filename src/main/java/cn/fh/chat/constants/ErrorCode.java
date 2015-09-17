@@ -8,7 +8,8 @@ public enum ErrorCode {
     SUCCESS(0, "success"),
     FAILED(-1, "failed"),
     NOT_EXIST(1, "not exist"),
-    BAD_CONTENT(2, "bad content");
+    BAD_CONTENT(2, "bad content"),
+    NOT_IN_THIS_ROOM(3, "not in this room");
 
     private int code;
     private String message;
