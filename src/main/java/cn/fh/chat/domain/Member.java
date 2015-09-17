@@ -146,6 +146,16 @@ public class Member {
         this.roomList = roomList;
     }
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Member{");
+        sb.append("id=").append(id);
+        sb.append(", nickname='").append(nickname).append('\'');
+        sb.append(", token='").append(token).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
+
     public void setCtx(ChannelHandlerContext ctx) {
         this.ctx = ctx;
     }

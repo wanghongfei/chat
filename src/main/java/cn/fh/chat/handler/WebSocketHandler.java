@@ -13,6 +13,7 @@ import cn.fh.chat.exception.NotExistException;
 import cn.fh.chat.utils.CodingUtils;
 import cn.fh.chat.utils.CollectionUtils;
 import cn.fh.chat.utils.DateUtils;
+import cn.fh.chat.utils.MessageUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.sun.tools.doclint.HtmlTag;
@@ -64,7 +65,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             // 从聊天室中去掉
             List<Integer> roomList = m.getRoomList();
             if (null != roomList) {
-                roomList.forEach( id -> repo.exitRoom(id, m));
+                roomList.forEach(id -> repo.exitRoom(id, m));
             }
 
 
@@ -316,6 +317,10 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             CollectionUtils.removeFrom(roomList, num -> num.equals(roomId));
         }
 
+        if (logger.isDebugEnabled()) {
+            logger.debug("用户{}已退出聊天室{}", m, roomId);
+        }
+
         sendWebSocketResponse(ctx, ErrorCode.SUCCESS, null);
     }
 
@@ -325,7 +330,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
      * @param msg
      */
     protected void joinRoom(ChannelHandlerContext ctx, Message msg) {
-        Member m = (Member) ctx.attr(AttributeKey.valueOf(AttrKey.USER.toString()));
+        Member m = (Member) ctx.attr(AttributeKey.valueOf(AttrKey.USER.toString())).get();
         Integer roomId = msg.getHeader().getTargetRoomId();
 
         // 在房间中记录这个用户的加入
@@ -339,6 +344,9 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         m.setRoomList(roomList);
 
 
+        if (logger.isDebugEnabled()) {
+            logger.debug("用户{}已加入聊天室{}", m, roomId);
+        }
         sendWebSocketResponse(ctx, ErrorCode.SUCCESS, null);
     }
 
@@ -405,6 +413,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             throw new NotExistException();
         }
 
+        MessageUtils.eraseSensitiveInfo(msg);
 
         // 向该聊天室中所有人发送信息
         Collection<Channel> channelCo = memList.stream()
