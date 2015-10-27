@@ -306,7 +306,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
      * @param msg
      */
     protected void exitRoom(ChannelHandlerContext ctx, Message msg) {
-        Member m = (Member) ctx.attr(AttributeKey.valueOf(AttrKey.USER.toString()));
+        Member m = MessageUtils.getFromCtx(ctx);
         Integer roomId = msg.getHeader().getTargetRoomId();
 
         // 更新聊天室状态
@@ -330,7 +330,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
      * @param msg
      */
     protected void joinRoom(ChannelHandlerContext ctx, Message msg) {
-        Member m = (Member) ctx.attr(AttributeKey.valueOf(AttrKey.USER.toString())).get();
+        Member m = MessageUtils.getFromCtx(ctx);
         Integer roomId = msg.getHeader().getTargetRoomId();
 
         // 在房间中记录这个用户的加入
@@ -429,7 +429,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         Collection<Channel> channelCo = memList.stream()
                 .map(mem -> mem.getCtx().channel())
                 .collect(Collectors.toSet());
-        
+
         sendInChannelGroup(ctx, channelCo, msg);
 
     }
