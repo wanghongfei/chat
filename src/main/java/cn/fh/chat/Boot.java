@@ -1,7 +1,5 @@
 package cn.fh.chat;
 
-import cn.fh.chat.data.DataRepo;
-import cn.fh.chat.handler.WebSocketHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -32,7 +30,6 @@ public class Boot {
 
         int port = getPort(args);
 
-        DataRepo repo = new DataRepo();
 
 
         EventLoopGroup masterGroup = new NioEventLoopGroup(1);
@@ -51,7 +48,7 @@ public class Boot {
                             pip.addLast("http-codec", new HttpServerCodec());
                             pip.addLast("aggregator", new HttpObjectAggregator(65536));
                             pip.addLast("http-chunked", new ChunkedWriteHandler());
-                            pip.addLast("handler", new WebSocketHandler(repo));
+                            //pip.addLast("handler", new WebSocketHandler(repo));
                         }
                     });
 
