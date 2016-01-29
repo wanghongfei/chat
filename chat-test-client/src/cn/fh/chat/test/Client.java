@@ -3,6 +3,7 @@ package cn.fh.chat.test;
 import java.io.DataOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.util.Date;
 
 /**
@@ -10,13 +11,19 @@ import java.util.Date;
  */
 public class Client {
     public static void main(String[] args) throws Exception {
+
         Socket socket = new Socket("127.0.0.1", 8080);
         OutputStream out = socket.getOutputStream();
 
 
         Date now = new Date();
         DataOutputStream dataOut = new DataOutputStream(out);
-        dataOut.writeBytes("qwertyuiop");
+        String str = "qwertyu你";
+        //byte[] buf = str.getBytes();
+        //System.out.println(new String(buf));
+        out.write(str.getBytes());
+        //dataOut.writeBytes("qwertyu111");
+        //dataOut
         dataOut.writeInt(40);
         dataOut.writeLong(now.getTime());
 

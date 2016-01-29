@@ -10,6 +10,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.List;
 
@@ -89,15 +90,22 @@ public class BinProtocolDecoder extends ByteToMessageDecoder {
      * @return
      */
     private String readAsStr(ByteBuf in, int length) {
-        StringBuilder sid = new StringBuilder(length);
 
-        in.readBytes(length).forEachByte( b -> {
+        try {
+            return new String(in.readBytes(length).array(), "UTF-8");
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+/*        in.readBytes(length).forEachByte( b -> {
             sid.append((char) b);
 
             return true;
-        });
+        });*/
 
 
-        return sid.toString();
+        return null;
+        //return sid.toString();
     }
 }
