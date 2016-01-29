@@ -4,6 +4,7 @@
 ```
 mvn clean install
 ```
+`master`分支为二进制协议版本, `protocol-websocket`分支为WebSocket版本
 
 ## Start
 ```
