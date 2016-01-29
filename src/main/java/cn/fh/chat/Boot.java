@@ -1,5 +1,7 @@
 package cn.fh.chat;
 
+import cn.fh.chat.codec.BinProtocolDecoder;
+import cn.fh.chat.handler.ChatHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -45,9 +47,11 @@ public class Boot {
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline pip = ch.pipeline();
 
-                            pip.addLast("http-codec", new HttpServerCodec());
-                            pip.addLast("aggregator", new HttpObjectAggregator(65536));
-                            pip.addLast("http-chunked", new ChunkedWriteHandler());
+                            pip.addLast("decoding", new BinProtocolDecoder());
+                            pip.addLast("handler", new ChatHandler());
+                            //pip.addLast("http-codec", new HttpServerCodec());
+                            //pip.addLast("aggregator", new HttpObjectAggregator(65536));
+                            //pip.addLast("http-chunked", new ChunkedWriteHandler());
                             //pip.addLast("handler", new WebSocketHandler(repo));
                         }
                     });

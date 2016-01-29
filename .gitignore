@@ -13,3 +13,5 @@ deploy.sh
 **/*.swm
 **/*.swn
 **/*.DS_Store
+out/
+

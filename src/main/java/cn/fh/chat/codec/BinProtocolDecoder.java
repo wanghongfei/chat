@@ -4,6 +4,7 @@ import cn.fh.chat.protocol.BinHeader;
 import cn.fh.chat.protocol.BinProtocol;
 import cn.fh.chat.protocol.MessageType;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufProcessor;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import org.slf4j.Logger;
@@ -31,8 +32,10 @@ public class BinProtocolDecoder extends ByteToMessageDecoder {
         if (in.readableBytes() >= HEADER_LENGTH) {
             // 读取sid
             String sid = readAsStr(in, SID_LENGTH);
+            log.info("sid = {}", sid);
             // 数据名总长度
             int length = in.readInt();
+            log.info("length = {}", length);
             long sentTime = in.readLong();
             String type = readAsStr(in, TYPE_LENGTH);
             int targetUserId = in.readInt();
@@ -49,8 +52,8 @@ public class BinProtocolDecoder extends ByteToMessageDecoder {
             } else {
                 // 数据包不完整
                 // 重置read index
+                log.info("{} bytes for body are not enough, data length = {}", in.readableBytes(), length);
                 in.resetReaderIndex();
-                log.info("{} bytes for body are not enough", bodyLength);
                 return;
             }
 
@@ -76,13 +79,24 @@ public class BinProtocolDecoder extends ByteToMessageDecoder {
             return;
         }
 
-        log.info("{} bytes are not engouth", in.readableBytes());
+        log.info("{} bytes are not enough", in.readableBytes());
     }
 
+    /**
+     * 读取前length个字符
+     * @param in
+     * @param length
+     * @return
+     */
     private String readAsStr(ByteBuf in, int length) {
         StringBuilder sid = new StringBuilder(length);
 
-        sid.append(in.readBytes(length));
+        in.readBytes(length).forEachByte( b -> {
+            sid.append((char) b);
+
+            return true;
+        });
+
 
         return sid.toString();
     }

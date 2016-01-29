@@ -1,5 +1,24 @@
-var WebSocket = require('ws');
+//var WebSocket = require('ws');
 
+var net = require("net");
+
+var PORT = 8080;
+var HOST = "127.0.0.1"
+
+var client = new net.Socket();
+client.connect(PORT, HOST, function(){
+    console.log('connect to ' + HOST + ':' + PORT);
+    client.write('hello');
+
+
+    client.destroy();
+});
+
+client.on('close', function(){
+    console.log('connetion closed.');
+});
+
+/*
 var ws = new WebSocket('ws://localhost:8080/chat', function() {
     console.log('client has been started');
 });
@@ -56,4 +75,4 @@ ws.on('message', function(data, flags) {
     }
 
 
-});
+});*/
