@@ -19,12 +19,12 @@ java -jar target/char.jar 9000 # ws://localhost:9000/chat
 
 | 字段名            | 偏移量  | 字段长度     | 数据类型   | 说明                   |
 | -------------- | ---- | -------- | ------ | -------------------- |
-| sid            | 0    | 10 bytes | string | 会话id                 |
+| sid            | 0    | 10 bytes | string(UTF-8) | 会话id                 |
 | length         | 10   | 4 bytes  | int    | 数据包总长度               |
 | sent time      | 14   | 8 bytes  | long   | 发送时间, 自1970-1-1以来的秒数 |
-| type           | 22   | 2 bytes  | string | 数据包的类型               |
+| type           | 22   | 2 bytes  | string(UTF-8) | 数据包的类型               |
 | target_user_id | 24   | 4 bytes  | int    | 消息接收者的用户id           |
 | target_room_id | 28   | 4 bytes  | int    | 目标聊天室的id             |
 | mem_id         | 32   | 4 bytes  | int    | 发送者用户id              |
-| body           | 36   |          | string | 消息体                  |
+| body           | 36   | 变长     | string | 消息体                  |
 
