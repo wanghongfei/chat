@@ -10,6 +10,14 @@ public class BinProtocol {
 
     private String body;
 
+    /**
+     * 返回数据包的总长度
+     * @return
+     */
+    public int getLength() {
+        return body.getBytes().length + BinHeader.HEADER_LENGTH;
+    }
+
     public BinHeader getHeader() {
         return header;
     }

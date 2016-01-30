@@ -20,6 +20,8 @@ public class BinHeader {
 
     private Integer memId;
 
+    public static int HEADER_LENGTH = 36;
+
     public String getSid() {
         return sid;
     }
