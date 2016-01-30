@@ -22,6 +22,19 @@ public class BinHeader {
 
     public static int HEADER_LENGTH = 36;
 
+    public BinHeader() {}
+
+    public BinHeader(String sid, MessageType type, Integer targetUserId, Integer targetRoomId, Integer memId, int bodySize) {
+        this.sid = sid;
+        this.type = type;
+        this.targetUserId = targetUserId;
+        this.targetRoomId = targetRoomId;
+        this.memId = memId;
+
+        this.sentTime = new Date();
+        this.length = HEADER_LENGTH + bodySize;
+    }
+
     public String getSid() {
         return sid;
     }

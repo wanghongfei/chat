@@ -1,6 +1,9 @@
 package cn.fh.chat.handler;
 
+import cn.fh.chat.protocol.BinHeader;
 import cn.fh.chat.protocol.BinProtocol;
+import cn.fh.chat.protocol.MessageType;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
@@ -16,6 +19,21 @@ public class ChatHandler extends SimpleChannelInboundHandler<BinProtocol> {
     protected void messageReceived(ChannelHandlerContext ctx, BinProtocol msg) throws Exception {
         log.info("message = {}", msg);
 
-        ctx.channel().close();
+        String body = "OK";
+        BinHeader header = new BinHeader(
+                msg.getHeader().getSid(),
+                MessageType.RESPONSE_OK,
+                -1,
+                -1,
+                -1,
+                BinHeader.HEADER_LENGTH + body.getBytes().length
+        );
+
+        BinProtocol resp = new BinProtocol(header, body);
+        ctx.channel().writeAndFlush(resp).addListener( future -> {
+            System.out.println("sent");
+            ctx.close();
+        });
+
     }
 }

@@ -10,6 +10,15 @@ public class BinProtocol {
 
     private String body;
 
+    public BinProtocol() {
+
+    }
+
+    public BinProtocol(BinHeader header, String body) {
+        this.header = header;
+        this.body = body;
+    }
+
     /**
      * 返回数据包的总长度
      * @return

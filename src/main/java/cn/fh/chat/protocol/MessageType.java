@@ -13,7 +13,12 @@ public enum MessageType {
      */
     CLOSE("01"),
     ONE_TO_ONE("02"),
-    ONE_TO_MANY("03");
+    ONE_TO_MANY("03"),
+    /**
+     * 服务器返回确认数据包
+     */
+    RESPONSE_OK("04"),
+    RESPONSE_ERROR("05");
 
     private String code;
 
@@ -42,6 +47,12 @@ public enum MessageType {
 
             case "03":
                 return ONE_TO_MANY;
+
+            case "04":
+                return RESPONSE_OK;
+
+            case "05":
+                return RESPONSE_ERROR;
 
             default:
                 return null;

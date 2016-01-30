@@ -12,7 +12,7 @@ public class BinProtocolEncoder extends MessageToByteEncoder<BinProtocol> {
     @Override
     protected void encode(ChannelHandlerContext ctx, BinProtocol msg, ByteBuf out) throws Exception {
         out.writeBytes(msg.getHeader().getSid().getBytes());
-        out.writeByte(msg.getLength());
+        out.writeInt(msg.getLength());
         out.writeLong(msg.getHeader().getSentTime().getTime());
         out.writeBytes(msg.getHeader().getType().code().getBytes());
         out.writeInt(msg.getHeader().getTargetUserId());
